@@ -37,36 +37,43 @@ impl CameraBuilder {
     }
   }
 
+  #[allow(dead_code)]
   pub fn with_eye(mut self, eye: Point3<GLfloat>) -> CameraBuilder {
     self.eye = eye;
     self
   }
 
+  #[allow(dead_code)]
   pub fn with_target(mut self, target: Point3<GLfloat>) -> CameraBuilder {
     self.target = target;
     self
   }
 
+  #[allow(dead_code)]
   pub fn with_up(mut self, up: Vector3<GLfloat>) -> CameraBuilder {
     self.up = up;
     self
   }
 
+  #[allow(dead_code)]
   pub fn with_fovy(mut self, fovy: Rad<GLfloat>) -> CameraBuilder {
     self.fovy = fovy;
     self
   }
 
+  #[allow(dead_code)]
   pub fn with_aspect(mut self, aspect: GLfloat) -> CameraBuilder {
     self.aspect = aspect;
     self
   }
 
+  #[allow(dead_code)]
   pub fn with_near(mut self, near: GLfloat) -> CameraBuilder {
     self.near = near;
     self
   }
 
+  #[allow(dead_code)]
   pub fn with_far(mut self, far: GLfloat) -> CameraBuilder {
     self.far = far;
     self

@@ -16,9 +16,11 @@ mod event_handler;
 mod game_state;
 use game_state::GameState;
 mod camera;
-use camera::{CameraBuilder, Camera};
+use camera::{CameraBuilder};
 mod triangle_creator;
 use triangle_creator::add_triangle;
+mod vao_builder;
+use vao_builder::{VaoBuilder, AttribParameters};
 
 fn main() {
   start_game();
