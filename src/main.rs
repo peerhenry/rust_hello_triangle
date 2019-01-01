@@ -20,7 +20,8 @@ mod event_handler;
 pub struct Game {
   running: bool,
   program_handle: GLuint,
-  vao: GLuint
+  vaos: Vec<GLuint>,
+  model_matrices: Vec<Matrix4<GLfloat>>
 }
 
 fn main() {
@@ -38,30 +39,38 @@ fn start_game() {
     .with_fragment_shader(include_str!("glsl/fragment.glsl"))
     .build();
 
-  println!("Setting up VBO for triangle...");
-  let vbo = unsafe { setup_vbo() };
+  let mut game = Game {
+    running: true,
+    program_handle: program_handle,
+    vaos: Vec::new(),
+    model_matrices: Vec::new()
+  };
 
-  println!("Setting up VAO...");
-  let vao = unsafe { setup_vao(vbo) };
-
-  println!("Initializing uniforms...");
-  unsafe { init_uniforms(program_handle); }
+  println!("Initializing game...");
+  game = init_game(game);
 
   println!("Running game...");
-  let game = Game {
-    running: true,
-    vao: vao,
-    program_handle: program_handle
-  };
   run_game(window, events_loop, game);
 }
 
-fn print_gl_version(){
+fn print_gl_version() {
   let version = unsafe{
     let data = CStr::from_ptr(gl::GetString(gl::VERSION) as *const _).to_bytes().to_vec();
     String::from_utf8(data).unwrap()  // no semicolon means return
   };
   println!("OpenGL Version {}", version);
+}
+
+fn init_game(mut game: Game) -> Game {
+  // create model
+  let vbo = unsafe { setup_vbo() };
+  let vao = unsafe { setup_vao(vbo) };
+  game.vaos.push(vao);
+  let model_matrix: Matrix4<GLfloat> = Matrix4::from_value(1.0);
+  game.model_matrices.push(model_matrix);
+  // init uniforms
+  unsafe { init_uniforms(game.program_handle); }
+  game
 }
 
 unsafe fn setup_vbo() -> GLuint {
@@ -140,18 +149,20 @@ unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLflo
 fn run_game(window: GlWindow, events_loop: EventsLoop, mut game: Game) {
   let mut next_loop = events_loop;
   loop {
-    if !game.running {
-      break;
-    }
     next_loop = event_handler::handle_events_loop(next_loop, &mut game);
     draw(&game);
     window.swap_buffers().unwrap();
+    if !game.running {
+      break;
+    }
   }
 }
 
 fn draw(game: &Game) {
-  unsafe{
-    gl::BindVertexArray(game.vao);
+  unsafe {
+    // todo: loop over entity components
+    // todo: send model_matrix to shader program
+    gl::BindVertexArray(game.vaos[0]);
     gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT);
     gl::DrawArrays(gl::TRIANGLES, 0, 3);
   }
