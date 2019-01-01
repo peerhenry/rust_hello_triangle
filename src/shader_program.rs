@@ -14,16 +14,20 @@ impl ShaderProgramBuilder {
     }
   }
 
+  #[allow(dead_code)]
   pub fn with_vertex_shader(self, glsl: &str) -> ShaderProgramBuilder {
     self.with_shader(gl::VERTEX_SHADER, glsl)
   }
 
+  #[allow(dead_code)]
   pub fn with_fragment_shader(self, glsl: &str) -> ShaderProgramBuilder {
     self.with_shader(gl::FRAGMENT_SHADER, glsl)
   }
 
-  // geometry shader
-  // tesselation shader
+  #[allow(dead_code)]
+  pub fn with_geometry_shader(self, glsl: &str) -> ShaderProgramBuilder {
+    self.with_shader(gl::GEOMETRY_SHADER, glsl)
+  }
 
   pub fn with_shader(self, shader_type: GLenum, glsl: &str) -> ShaderProgramBuilder {
     let shader = load_shader(shader_type, glsl);
