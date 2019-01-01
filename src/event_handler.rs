@@ -1,7 +1,7 @@
-use Game;
+use GameState;
 use glutin::{EventsLoop, Event, WindowEvent, VirtualKeyCode, ElementState};
 
-pub fn handle_events_loop(mut events_loop: EventsLoop, game: &mut Game) -> EventsLoop {
+pub fn handle_events_loop(mut events_loop: EventsLoop, game: &mut GameState) -> EventsLoop {
   events_loop.poll_events(|event| {
     match event {
       Event::WindowEvent{ event, .. } => { handle_window_event(event, game); },
@@ -11,7 +11,7 @@ pub fn handle_events_loop(mut events_loop: EventsLoop, game: &mut Game) -> Event
   events_loop
 }
 
-fn handle_window_event(event: WindowEvent, game: &mut Game) {
+fn handle_window_event(event: WindowEvent, game: &mut GameState) {
   match event {
     WindowEvent::Closed => { game.running = false },
     WindowEvent::KeyboardInput {input, ..} => { handle_key_input(input, game); },
@@ -21,7 +21,7 @@ fn handle_window_event(event: WindowEvent, game: &mut Game) {
   }
 }
 
-fn handle_key_input(input: glutin::KeyboardInput, game: &mut Game) {
+fn handle_key_input(input: glutin::KeyboardInput, game: &mut GameState) {
   match input.state {
     ElementState::Pressed => {
       if let Some(keycode) = input.virtual_keycode
@@ -38,10 +38,10 @@ fn handle_key_input(input: glutin::KeyboardInput, game: &mut Game) {
   }
 }
 
-fn handle_mouse_input(state: glutin::ElementState, button: glutin::MouseButton, game: &mut Game) {
+fn handle_mouse_input(state: glutin::ElementState, button: glutin::MouseButton, game: &mut GameState) {
 
 }
 
-fn handle_mouse_wheel(delta: glutin::MouseScrollDelta, game: &mut Game) {
+fn handle_mouse_wheel(delta: glutin::MouseScrollDelta, game: &mut GameState) {
 
 }

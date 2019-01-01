@@ -1,30 +1,24 @@
 // std
 use std::ffi::{CStr};
-use std::mem::size_of;
 // external crates
 extern crate gl;
 use gl::types::*;
 extern crate glutin;
 use glutin::{GlContext, GlWindow, EventsLoop};
 extern crate cgmath;
-use cgmath::{ Rad, Deg, Matrix, SquareMatrix, Matrix4, PerspectiveFov, Point3, Vector3 };
+use cgmath::{ Rad, Deg, Matrix, Matrix4, Point3, Vector3 };
 // modules
 mod context;
 use context::setup_context;
 mod shader_program;
 use shader_program::ShaderProgramBuilder;
 mod event_handler;
-
-pub struct Game {
-  // assets
-  running: bool,
-  program_handle: GLuint,
-  // components
-  vaos: Vec<GLuint>,
-  model_matrices: Vec<Matrix4<GLfloat>>,
-  // entity indices
-  entities: Vec<usize>
-}
+mod game_state;
+use game_state::GameState;
+mod camera;
+use camera::{CameraBuilder, Camera};
+mod triangle_creator;
+use triangle_creator::add_triangle;
 
 fn main() {
   start_game();
@@ -34,26 +28,16 @@ fn start_game() {
   println!("Setting up window and events loop...");
   let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
   print_gl_version();
-
   println!("Creating shader program...");
   let program_handle = ShaderProgramBuilder::new()
     .with_vertex_shader(include_str!("glsl/vertex.glsl"))
     .with_fragment_shader(include_str!("glsl/fragment.glsl"))
     .build();
-
-  let mut game = Game {
-    running: true,
-    program_handle: program_handle,
-    vaos: Vec::new(),
-    model_matrices: Vec::new(),
-    entities: Vec::new()
-  };
-
+  let mut game_state = GameState::new(program_handle);
   println!("Initializing game...");
-  game = init_game(game);
-
+  init_game(&mut game_state);
   println!("Running game...");
-  run_game(window, events_loop, game);
+  run_game(window, events_loop, game_state);
 }
 
 fn print_gl_version() {
@@ -64,109 +48,39 @@ fn print_gl_version() {
   println!("OpenGL Version {}", version);
 }
 
-fn init_game(mut game: Game) -> Game {
-  add_entity(&mut game);
-  unsafe { init_uniforms(game.program_handle); }
-  game
+fn init_game(game_state: &mut GameState) {
+  add_triangle(game_state);
+  init_camera(game_state);
 }
 
-fn add_entity(game: &mut Game) {
-  let vbo = unsafe { setup_vbo() };
-  let vao = unsafe { setup_vao(vbo) };
-  game.vaos.push(vao);
-  let model_matrix: Matrix4<GLfloat> = Matrix4::from_value(1.0);
-  game.model_matrices.push(model_matrix);
-  game.entities.push(0);
+fn init_camera(game_state: &mut GameState) {
+  game_state.camera = Some(CameraBuilder::new()
+    .with_eye(Point3::new(0.0, 0.0, -2.0))
+    .with_target(Point3::new(0.0, 0.0, 0.0))
+    .with_up(Vector3::new(0.0, 1.0, 0.0))
+    .with_fovy(Rad::from( Deg(45.0) ))
+    .with_aspect(16.0/9.0)
+    .with_near(0.1)
+    .with_far(100.0)
+    .build());
 }
 
-unsafe fn setup_vbo() -> GLuint {
-  // ##  Setup vertex data
-  let vertices: Vec<GLfloat> = vec![
-    // X    Y   Z       R     G     B   A
-     0.0,  0.5, 0.0,    1.0, 0.0, 0.0, 1.0,
-    -0.5, -0.5, 0.0,    0.0, 1.0, 0.0, 1.0,
-     0.5, -0.5, 0.0,    0.0, 0.0, 1.0, 1.0
-  ];
-  let mut vbo: GLuint = 0;
-  gl::GenBuffers(1, &mut vbo);
-  gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-  gl::BufferData(
-    gl::ARRAY_BUFFER,                                       // target
-    (vertices.len() * size_of::<GLfloat>()) as GLsizeiptr,  // size in bytes
-    vertices.as_ptr() as *const GLvoid,                     // data
-    gl::STATIC_DRAW                                         // usage
-  );
-  gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-  vbo
-}
-
-unsafe fn setup_vao(vbo: GLuint) -> GLuint {
-  let mut vao: GLuint = 0;
-  gl::GenVertexArrays(1, &mut vao); 
-  gl::BindVertexArray(vao);
-  gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-
-  // location, f/attribute, f/vertex (stride), offset
-  setup_attribute(0, 3, 7, 0);  // position
-  setup_attribute(1, 4, 7, 3);  // color
-
-  gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-  gl::BindVertexArray(0);
-  vao
-}
-
-unsafe fn setup_attribute(location: GLuint, floats_per_attribute: GLint, floats_per_vertex: usize, offset: usize){
-  gl::EnableVertexAttribArray(location); // this is "layout (location = 0)" in vertex shader
-  gl::VertexAttribPointer(
-    location,   // location
-    floats_per_attribute,          // number per attribute
-    gl::FLOAT,  // data type
-    gl::FALSE,  // normalized
-    (floats_per_vertex * size_of::<GLfloat>()) as GLint,  // stride
-    (offset * size_of::<GLfloat>()) as *const gl::types::GLvoid  // offset
-  );
-}
-
-unsafe fn init_uniforms(program: GLuint) {
-  let model_matrix: Matrix4<GLfloat> = Matrix4::from_value(1.0);
-  let view_matrix: Matrix4<GLfloat> = Matrix4::look_at(
-    Point3::new(0.0, 0.0, -2.0),  // eye
-    Point3::new(0.0, 0.0, 0.0),   // target
-    Vector3::new(0.0, 1.0, 0.0)   // up direction
-  );
-  let projection_matrix: Matrix4<GLfloat> = Matrix4::from(PerspectiveFov {
-    fovy: Rad::from( Deg(45.0) ),
-    aspect: 16.0/9.0,
-    near: 0.1,
-    far: 100.0
-  });
-  set_uniform_matrix(program, b"Model\0", model_matrix);
-  set_uniform_matrix(program, b"View\0", view_matrix);
-  set_uniform_matrix(program, b"Projection\0", projection_matrix);
-}
-
-unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLfloat>) {
-  // todo: store uniform locations at initialization
-  let location = gl::GetUniformLocation(program, name.as_ptr() as *const _);
-  gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
-}
-
-fn run_game(window: GlWindow, events_loop: EventsLoop, mut game: Game) {
+fn run_game(window: GlWindow, events_loop: EventsLoop, mut game_state: GameState) {
   let mut next_loop = events_loop;
   // ggez might have a useful timer, as well as other functionalities like sound
   // https://docs.rs/ggez/0.4.0/ggez/index.html
   loop {
-    next_loop = event_handler::handle_events_loop(next_loop, &mut game);
-    update(&mut game);
-    draw(&game);
+    next_loop = event_handler::handle_events_loop(next_loop, &mut game_state);
+    update(&mut game_state);
+    draw(&game_state);
     window.swap_buffers().unwrap();
-    if !game.running {
+    if !game_state.running {
       break;
     }
   }
 }
 
-fn update(game: &mut Game) {
+fn update(game: &mut GameState) {
   for entity_index in &game.entities {
     let model_matrix = game.model_matrices[*entity_index];
     let rot = Matrix4::from_angle_y(Rad(0.1));
@@ -174,9 +88,15 @@ fn update(game: &mut Game) {
   }
 }
 
-fn draw(game: &Game) {
+fn draw(game: &GameState) {
   unsafe { gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT); }
   let program = game.program_handle;
+  if let Some(ref cam) = game.camera {
+    unsafe {
+      set_uniform_matrix(program, b"View\0", cam.view_matrix);
+      set_uniform_matrix(program, b"Projection\0", cam.projection_matrix);
+    }
+  }
   for entity_index in &game.entities {
     let vao = game.vaos[*entity_index];
     let model_matrix = game.model_matrices[*entity_index];
@@ -186,4 +106,11 @@ fn draw(game: &Game) {
       gl::DrawArrays(gl::TRIANGLES, 0, 3);
     }
   }
+}
+
+// todo: move to shader program
+unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLfloat>) {
+  // todo: store uniform locations at initialization
+  let location = gl::GetUniformLocation(program, name.as_ptr() as *const _);
+  gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
 }
