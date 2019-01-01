@@ -1,19 +1,18 @@
 // std
-use std::ffi::{CStr, CString};
+use std::ffi::{CStr};
 use std::mem::size_of;
-use std::str;
 // external crates
 extern crate gl;
 use gl::types::*;
 extern crate glutin;
-use glutin::{GlContext, GlWindow, EventsLoop, Event, WindowEvent, VirtualKeyCode, ElementState};
+use glutin::{GlContext, GlWindow, EventsLoop};
 extern crate cgmath;
 use cgmath::{ Rad, Deg, Matrix, SquareMatrix, Matrix4, PerspectiveFov, Point3, Vector3 };
 // modules
 mod context;
 use context::setup_context;
 mod shader_program;
-use shader_program::create_shader_program;
+use shader_program::ShaderProgramBuilder;
 mod event_handler;
 
 // static mut RUNNING: bool = true;
@@ -29,14 +28,17 @@ fn main() {
 }
 
 fn start_game() {
-  println!("Setting up context...");
+  println!("Setting up window and events loop...");
   let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
   print_gl_version();
 
   println!("Creating shader program...");
-  let program_handle = unsafe { create_shader_program(include_str!("glsl/vertex.glsl"), include_str!("glsl/fragment.glsl")) };
+  let program_handle = ShaderProgramBuilder::new()
+    .with_vertex_shader(include_str!("glsl/vertex.glsl"))
+    .with_fragment_shader(include_str!("glsl/fragment.glsl"))
+    .build();
 
-  println!("Setting up VBO...");
+  println!("Setting up VBO for triangle...");
   let vbo = unsafe { setup_vbo() };
 
   println!("Setting up VAO...");

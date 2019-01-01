@@ -3,16 +3,41 @@ use std::ffi::CString;
 extern crate gl;
 use gl::types::*;
 
-pub unsafe fn create_shader_program(vertex_glsl: &str, fragment_glsl: &str) -> GLuint{
-  let vertex_shader = load_shader(gl::VERTEX_SHADER, vertex_glsl);
-  let fragment_shader = load_shader(gl::FRAGMENT_SHADER, fragment_glsl);
-  println!("Creating program...");
-  let handle = gl::CreateProgram();
-  gl::AttachShader(handle, vertex_shader);
-  gl::AttachShader(handle, fragment_shader);
-  link_program(handle);
-  gl::UseProgram(handle);
-  handle
+pub struct ShaderProgramBuilder {
+  handle: GLuint
+}
+
+impl ShaderProgramBuilder {
+  pub fn new() -> ShaderProgramBuilder {
+    ShaderProgramBuilder {
+      handle: unsafe { gl::CreateProgram() }
+    }
+  }
+
+  pub fn with_vertex_shader(self, glsl: &str) -> ShaderProgramBuilder {
+    self.with_shader(gl::VERTEX_SHADER, glsl)
+  }
+
+  pub fn with_fragment_shader(self, glsl: &str) -> ShaderProgramBuilder {
+    self.with_shader(gl::FRAGMENT_SHADER, glsl)
+  }
+
+  // geometry shader
+  // tesselation shader
+
+  pub fn with_shader(self, shader_type: GLenum, glsl: &str) -> ShaderProgramBuilder {
+    let shader = load_shader(shader_type, glsl);
+    unsafe { gl::AttachShader(self.handle, shader); }
+    self
+  }
+
+  pub fn build(self) -> GLuint {
+    unsafe {
+      link_program(self.handle);
+      gl::UseProgram(self.handle);
+    }
+    self.handle
+  }
 }
 
 fn load_shader(shader_type: GLenum, glsl: &str) -> GLuint {
@@ -26,7 +51,7 @@ fn load_shader(shader_type: GLenum, glsl: &str) -> GLuint {
   }
 }
 
-unsafe fn link_program(program_id: GLuint){
+unsafe fn link_program(program_id: GLuint) {
   gl::LinkProgram(program_id);
   check_gl_status(program_id, gl::LINK_STATUS);
   check_gl_status(program_id, gl::VALIDATE_STATUS);

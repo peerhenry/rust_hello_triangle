@@ -6,7 +6,7 @@ extern crate glutin;
 use glutin::{ GlContext, ContextBuilder, WindowBuilder, GlWindow, EventsLoop};
 
 pub fn setup_context(title: &str, width: u32, height: u32) -> (GlWindow, EventsLoop) {
-  let mut events_loop = EventsLoop::new();
+  let events_loop = EventsLoop::new();
   let window_builder = WindowBuilder::new()
     .with_title(title)
     .with_dimensions(width, height);
