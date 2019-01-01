@@ -6,28 +6,35 @@ use std::str;
 extern crate gl;
 use gl::types::*;
 extern crate glutin;
-use glutin::{GlContext, Event, WindowEvent, VirtualKeyCode, ElementState};
+use glutin::{GlContext, GlWindow, EventsLoop, Event, WindowEvent, VirtualKeyCode, ElementState};
 extern crate cgmath;
 use cgmath::{ Rad, Deg, Matrix, SquareMatrix, Matrix4, PerspectiveFov, Point3, Vector3 };
 // modules
 mod context;
-use context::{ setup_context, Context };
+use context::setup_context;
 mod shader_program;
 use shader_program::create_shader_program;
+mod event_handler;
 
-static mut RUNNING: bool = true;
+// static mut RUNNING: bool = true;
+
+pub struct Game {
+  running: bool,
+  program_handle: GLuint,
+  vao: GLuint
+}
 
 fn main() {
   start_game();
 }
 
-fn start_game(){
+fn start_game() {
   println!("Setting up context...");
-  let mut context = setup_context("Hello, Triangle", 1600, 900);
+  let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
   print_gl_version();
 
   println!("Creating shader program...");
-  let program = unsafe { create_shader_program(include_str!("glsl/vertex.glsl"), include_str!("glsl/fragment.glsl")) };
+  let program_handle = unsafe { create_shader_program(include_str!("glsl/vertex.glsl"), include_str!("glsl/fragment.glsl")) };
 
   println!("Setting up VBO...");
   let vbo = unsafe { setup_vbo() };
@@ -36,10 +43,15 @@ fn start_game(){
   let vao = unsafe { setup_vao(vbo) };
 
   println!("Initializing uniforms...");
-  unsafe { init_uniforms(program); }
-  
+  unsafe { init_uniforms(program_handle); }
+
   println!("Running game...");
-  run_game(&mut context, vao);
+  let game = Game {
+    running: true,
+    vao: vao,
+    program_handle: program_handle
+  };
+  run_game(window, events_loop, game);
 }
 
 fn print_gl_version(){
@@ -123,49 +135,22 @@ unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLflo
   gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
 }
 
-fn run_game(context: &mut Context, vao: GLuint){
-  while unsafe{ RUNNING } {
-    // handle events
-    context.events_loop.poll_events(|event| {
-      match event {
-        Event::WindowEvent{ event, .. } => {
-          match event {
-            WindowEvent::Closed => { unsafe{ RUNNING = false; } },
-            _ => { handle_window_event(event); }
-          }
-        },
-        _ => ()
-      }
-    });
-    // draw
-    unsafe{
-      gl::BindVertexArray(vao);
-      gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT);
-      gl::DrawArrays(gl::TRIANGLES, 0, 3);
+fn run_game(window: GlWindow, events_loop: EventsLoop, mut game: Game) {
+  let mut next_loop = events_loop;
+  loop {
+    if !game.running {
+      break;
     }
-    // swap buffers
-    context.window.swap_buffers().unwrap();
+    next_loop = event_handler::handle_events_loop(next_loop, &mut game);
+    draw(&game);
+    window.swap_buffers().unwrap();
   }
 }
 
-fn handle_window_event(event: WindowEvent){
-  match event {
-    WindowEvent::KeyboardInput {input, ..} => {
-      match input.state{
-        ElementState::Pressed => {
-          if let Some(keycode) = input.virtual_keycode
-          {
-            match keycode{
-              VirtualKeyCode::Escape => { unsafe{ RUNNING = false; } },
-              _ => ()
-            }
-          }
-        },
-        ElementState::Released => {
-
-        }
-      }
-    },
-    _ => { /* nothing */ }
+fn draw(game: &Game) {
+  unsafe{
+    gl::BindVertexArray(game.vao);
+    gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT);
+    gl::DrawArrays(gl::TRIANGLES, 0, 3);
   }
 }

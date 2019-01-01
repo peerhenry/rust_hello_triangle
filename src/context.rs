@@ -5,12 +5,7 @@ extern crate gl;
 extern crate glutin;
 use glutin::{ GlContext, ContextBuilder, WindowBuilder, GlWindow, EventsLoop};
 
-pub struct Context{
-  pub window: GlWindow,
-  pub events_loop: EventsLoop
-}
-
-pub fn setup_context(title: &str, width: u32, height: u32) -> Context {
+pub fn setup_context(title: &str, width: u32, height: u32) -> (GlWindow, EventsLoop) {
   let mut events_loop = EventsLoop::new();
   let window_builder = WindowBuilder::new()
     .with_title(title)
@@ -25,8 +20,5 @@ pub fn setup_context(title: &str, width: u32, height: u32) -> Context {
     gl::ClearColor(0.0, 154.0/255.0, 206.0/255.0, 235.0/255.0);
   }
   
-  Context {
-    window: gl_window,
-    events_loop: events_loop
-  }
+  (gl_window, events_loop)
 }
