@@ -15,13 +15,15 @@ mod shader_program;
 use shader_program::ShaderProgramBuilder;
 mod event_handler;
 
-// static mut RUNNING: bool = true;
-
 pub struct Game {
+  // assets
   running: bool,
   program_handle: GLuint,
+  // components
   vaos: Vec<GLuint>,
-  model_matrices: Vec<Matrix4<GLfloat>>
+  model_matrices: Vec<Matrix4<GLfloat>>,
+  // entity indices
+  entities: Vec<usize>
 }
 
 fn main() {
@@ -43,7 +45,8 @@ fn start_game() {
     running: true,
     program_handle: program_handle,
     vaos: Vec::new(),
-    model_matrices: Vec::new()
+    model_matrices: Vec::new(),
+    entities: Vec::new()
   };
 
   println!("Initializing game...");
@@ -62,15 +65,18 @@ fn print_gl_version() {
 }
 
 fn init_game(mut game: Game) -> Game {
-  // create model
+  add_entity(&mut game);
+  unsafe { init_uniforms(game.program_handle); }
+  game
+}
+
+fn add_entity(game: &mut Game) {
   let vbo = unsafe { setup_vbo() };
   let vao = unsafe { setup_vao(vbo) };
   game.vaos.push(vao);
   let model_matrix: Matrix4<GLfloat> = Matrix4::from_value(1.0);
   game.model_matrices.push(model_matrix);
-  // init uniforms
-  unsafe { init_uniforms(game.program_handle); }
-  game
+  game.entities.push(0);
 }
 
 unsafe fn setup_vbo() -> GLuint {
@@ -134,22 +140,24 @@ unsafe fn init_uniforms(program: GLuint) {
     near: 0.1,
     far: 100.0
   });
-
   set_uniform_matrix(program, b"Model\0", model_matrix);
   set_uniform_matrix(program, b"View\0", view_matrix);
   set_uniform_matrix(program, b"Projection\0", projection_matrix);
 }
 
-unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLfloat>){
+unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLfloat>) {
+  // todo: store uniform locations at initialization
   let location = gl::GetUniformLocation(program, name.as_ptr() as *const _);
-  println!("setting uniform at location {}", location);
   gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
 }
 
 fn run_game(window: GlWindow, events_loop: EventsLoop, mut game: Game) {
   let mut next_loop = events_loop;
+  // ggez might have a useful timer, as well as other functionalities like sound
+  // https://docs.rs/ggez/0.4.0/ggez/index.html
   loop {
     next_loop = event_handler::handle_events_loop(next_loop, &mut game);
+    update(&mut game);
     draw(&game);
     window.swap_buffers().unwrap();
     if !game.running {
@@ -158,12 +166,24 @@ fn run_game(window: GlWindow, events_loop: EventsLoop, mut game: Game) {
   }
 }
 
+fn update(game: &mut Game) {
+  for entity_index in &game.entities {
+    let model_matrix = game.model_matrices[*entity_index];
+    let rot = Matrix4::from_angle_y(Rad(0.1));
+    game.model_matrices[*entity_index] = rot * model_matrix;
+  }
+}
+
 fn draw(game: &Game) {
-  unsafe {
-    // todo: loop over entity components
-    // todo: send model_matrix to shader program
-    gl::BindVertexArray(game.vaos[0]);
-    gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT);
-    gl::DrawArrays(gl::TRIANGLES, 0, 3);
+  unsafe { gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT); }
+  let program = game.program_handle;
+  for entity_index in &game.entities {
+    let vao = game.vaos[*entity_index];
+    let model_matrix = game.model_matrices[*entity_index];
+    unsafe {
+      set_uniform_matrix(program, b"Model\0", model_matrix);
+      gl::BindVertexArray(vao);
+      gl::DrawArrays(gl::TRIANGLES, 0, 3);
+    }
   }
 }
