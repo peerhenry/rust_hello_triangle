@@ -1,6 +1,6 @@
 use gl::types::*;
 use cgmath::{ Matrix4 };
-use camera::Camera;
+use crate::camera::Camera;
 
 pub struct GameState {
   // assets

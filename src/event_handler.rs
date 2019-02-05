@@ -1,4 +1,4 @@
-use GameState;
+use crate::game_state::GameState;
 use glutin::{EventsLoop, Event, WindowEvent, VirtualKeyCode, ElementState};
 
 pub fn handle_events_loop(mut events_loop: EventsLoop, game: &mut GameState) -> EventsLoop {

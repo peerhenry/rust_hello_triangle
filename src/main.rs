@@ -1,26 +1,23 @@
 // std
 use std::ffi::{CStr};
 // external crates
-extern crate gl;
 use gl::types::*;
-extern crate glutin;
 use glutin::{GlContext, GlWindow, EventsLoop};
-extern crate cgmath;
 use cgmath::{ Rad, Deg, Matrix, Matrix4, Point3, Vector3 };
 // modules
 mod context;
-use context::setup_context;
+use crate::context::setup_context;
 mod shader_program;
-use shader_program::ShaderProgramBuilder;
-mod event_handler;
+use crate::shader_program::ShaderProgramBuilder;
 mod game_state;
-use game_state::GameState;
+use crate::game_state::GameState;
 mod camera;
-use camera::{CameraBuilder};
+use crate::camera::{CameraBuilder};
 mod triangle_creator;
-use triangle_creator::add_triangle;
+use crate::triangle_creator::add_triangle;
 mod vao_builder;
-use vao_builder::{VaoBuilder, AttribParameters};
+use crate::vao_builder::{VaoBuilder, AttribParameters};
+mod event_handler;
 
 fn main() {
   start_game();

@@ -1,8 +1,6 @@
 // std
 use std::str;
 // external crates
-extern crate gl;
-extern crate glutin;
 use glutin::{ GlContext, ContextBuilder, WindowBuilder, GlWindow, EventsLoop};
 
 pub fn setup_context(title: &str, width: u32, height: u32) -> (GlWindow, EventsLoop) {
