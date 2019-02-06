@@ -1,5 +1,3 @@
-// std
-use std::ffi::{CStr};
 // external crates
 use gl::types::*;
 use glutin::{GlContext, GlWindow, EventsLoop};
@@ -16,7 +14,6 @@ use crate::camera::{CameraBuilder};
 mod triangle_creator;
 use crate::triangle_creator::add_triangle;
 mod vao_builder;
-use crate::vao_builder::{VaoBuilder, AttribParameters};
 mod event_handler;
 
 fn main() {
@@ -24,27 +21,14 @@ fn main() {
 }
 
 fn start_game() {
-  println!("Setting up window and events loop...");
   let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
-  print_gl_version();
-  println!("Creating shader program...");
   let program_handle = ShaderProgramBuilder::new()
     .with_vertex_shader(include_str!("glsl/vertex.glsl"))
     .with_fragment_shader(include_str!("glsl/fragment.glsl"))
     .build();
   let mut game_state = GameState::new(program_handle);
-  println!("Initializing game...");
   init_game(&mut game_state);
-  println!("Running game...");
   run_game(window, events_loop, game_state);
-}
-
-fn print_gl_version() {
-  let version = unsafe{
-    let data = CStr::from_ptr(gl::GetString(gl::VERSION) as *const _).to_bytes().to_vec();
-    String::from_utf8(data).unwrap()  // no semicolon means return
-  };
-  println!("OpenGL Version {}", version);
 }
 
 fn init_game(game_state: &mut GameState) {

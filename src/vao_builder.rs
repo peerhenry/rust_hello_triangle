@@ -1,26 +1,13 @@
 use std::mem::size_of;
 use gl::types::*;
+pub mod attrib_data;
+use self::attrib_data::AttribData;
+pub mod attrib_parameters;
+use self::attrib_parameters::AttribParameters;
+pub mod buffer_component;
+use self::buffer_component::BufferComponent;
 
 // builder pattern; VaoBuilder returns BufferComponent
-
-pub struct BufferComponent {
-  pub vao: GLuint,
-  pub vbo: GLuint,
-  pub ibo: GLuint
-}
-
-pub struct AttribParameters {
-  pub floats_per_attribute: GLint,
-  pub floats_per_vertex: usize,
-  pub offset: usize
-}
-
-struct AttribData {
-  location: GLuint,
-  floats_per_attribute: GLint,
-  floats_per_vertex: usize,
-  offset: usize
-}
 
 pub struct VaoBuilder {
   use_indices: bool,
