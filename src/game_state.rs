@@ -1,3 +1,4 @@
+use crate::shader_program::ShaderProgram;
 use gl::types::*;
 use cgmath::{ Matrix4 };
 use crate::camera::Camera;
@@ -5,7 +6,7 @@ use crate::camera::Camera;
 pub struct GameState {
   // assets
   pub running: bool,
-  pub program_handle: GLuint,
+  pub shader_program: Option<ShaderProgram>,
   pub camera: Option<Camera>,
   // components
   pub vaos: Vec<GLuint>,
@@ -15,10 +16,10 @@ pub struct GameState {
 }
 
 impl GameState {
-  pub fn new(program_handle: GLuint) -> GameState {
+  pub fn new(shader_program: Option<ShaderProgram>) -> GameState {
     GameState {
       running: true,
-      program_handle,
+      shader_program,
       camera: None,
       vaos: Vec::new(),
       model_matrices: Vec::new(),

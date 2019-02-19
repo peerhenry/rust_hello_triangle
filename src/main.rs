@@ -6,7 +6,9 @@ use cgmath::{ Rad, Deg, Matrix, Matrix4, Point3, Vector3 };
 mod context;
 use crate::context::setup_context;
 mod shader_program;
-use crate::shader_program::ShaderProgramBuilder;
+use shader_program::ShaderProgram;
+mod shader_program_builder;
+use shader_program_builder::ShaderProgramBuilder;
 mod game_state;
 use crate::game_state::GameState;
 mod camera;
@@ -22,11 +24,11 @@ fn main() {
 
 fn start_game() {
   let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
-  let program_handle = ShaderProgramBuilder::new()
+  let program: ShaderProgram = ShaderProgramBuilder::new()
     .with_vertex_shader(include_str!("glsl/vertex.glsl"))
     .with_fragment_shader(include_str!("glsl/fragment.glsl"))
     .build();
-  let mut game_state = GameState::new(program_handle);
+  let mut game_state = GameState::new(Some(program));
   init_game(&mut game_state);
   run_game(window, events_loop, game_state);
 }
@@ -71,29 +73,23 @@ fn update(game: &mut GameState) {
   }
 }
 
-fn draw(game: &GameState) {
+fn draw(game: &GameState) -> Result<(),&str> {
   unsafe { gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT); }
-  let program = game.program_handle;
-  if let Some(ref cam) = game.camera {
-    unsafe {
-      set_uniform_matrix(program, b"View\0", cam.view_matrix);
-      set_uniform_matrix(program, b"Projection\0", cam.projection_matrix);
-    }
+  let program = game.shader_program.as_ref().map_or(Err("Trying to draw but no shader program in GameState"), |p| Ok(p))?;
+  let cam = game.camera.as_ref().map_or(Err("Trying to draw but no camera in GameState"), |c| Ok(c))?;
+  unsafe {
+    program.set_uniform_matrix("View", cam.view_matrix);
+    program.set_uniform_matrix("Projection", cam.projection_matrix);
   }
+  // todo: move to GameState
   for entity_index in &game.entities {
     let vao = game.vaos[*entity_index];
     let model_matrix = game.model_matrices[*entity_index];
     unsafe {
-      set_uniform_matrix(program, b"Model\0", model_matrix);
+      program.set_uniform_matrix("Model", model_matrix);
       gl::BindVertexArray(vao);
       gl::DrawArrays(gl::TRIANGLES, 0, 3);
     }
   }
-}
-
-// todo: move to shader program
-unsafe fn set_uniform_matrix(program: GLuint, name: &[u8], matrix: Matrix4<GLfloat>) {
-  // todo: store uniform locations at initialization
-  let location = gl::GetUniformLocation(program, name.as_ptr() as *const _);
-  gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
+  Ok(())
 }
