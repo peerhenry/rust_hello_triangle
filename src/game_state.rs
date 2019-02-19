@@ -33,7 +33,6 @@ impl GameState {
       program.set_uniform_matrix("View", cam.view_matrix);
       program.set_uniform_matrix("Projection", cam.projection_matrix);
     }
-    // todo: move to GameState
     for entity_index in &self.entities {
       let vao = self.vaos[*entity_index];
       let model_matrix = self.model_matrices[*entity_index];
@@ -44,5 +43,55 @@ impl GameState {
       }
     }
     Ok(())
+  }
+}
+
+// builder
+#[derive(Default)]
+pub struct GameStateBuilder
+{
+  pub shader_program: Option<ShaderProgram>,
+  pub camera: Option<Camera>,
+}
+
+impl GameStateBuilder {
+  #[allow(dead_code)]
+  pub fn new() -> Self {
+    Default::default()
+  }
+
+  #[allow(dead_code)]
+  pub fn with_shader_program(mut self, shader_program: Option<ShaderProgram>) -> Self {
+    self.shader_program = shader_program;
+    self
+  }
+
+  #[allow(dead_code)]
+  pub fn with_camera(mut self, camera: Option<Camera>) -> Self {
+    self.camera = camera;
+    self
+  }
+
+  #[allow(dead_code)]
+  pub fn build(self) -> GameState {
+    let mut state = GameState::new(self.shader_program);
+    state.camera = self.camera;
+    state
+  }
+}
+
+#[cfg(test)]
+mod game_state_tests {
+  use super::*;
+
+  #[test]
+  fn can_build_empty_game_state() {
+    // arrange
+    let builder = GameStateBuilder::new();
+    // act
+    let game = builder.build();
+    // assert
+    assert!(game.camera.is_none());
+    assert!(game.shader_program.is_none());
   }
 }

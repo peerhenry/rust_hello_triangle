@@ -8,28 +8,28 @@ pub struct ShaderProgramBuilder {
 }
 
 impl ShaderProgramBuilder {
-  pub fn new() -> ShaderProgramBuilder {
+  pub fn new() -> Self {
     ShaderProgramBuilder {
       handle: unsafe { gl::CreateProgram() }
     }
   }
 
   #[allow(dead_code)]
-  pub fn with_vertex_shader(self, glsl: &str) -> ShaderProgramBuilder {
+  pub fn with_vertex_shader(self, glsl: &str) -> Self {
     self.with_shader(gl::VERTEX_SHADER, glsl)
   }
 
   #[allow(dead_code)]
-  pub fn with_fragment_shader(self, glsl: &str) -> ShaderProgramBuilder {
+  pub fn with_fragment_shader(self, glsl: &str) -> Self {
     self.with_shader(gl::FRAGMENT_SHADER, glsl)
   }
 
   #[allow(dead_code)]
-  pub fn with_geometry_shader(self, glsl: &str) -> ShaderProgramBuilder {
+  pub fn with_geometry_shader(self, glsl: &str) -> Self {
     self.with_shader(gl::GEOMETRY_SHADER, glsl)
   }
 
-  pub fn with_shader(self, shader_type: GLenum, glsl: &str) -> ShaderProgramBuilder {
+  pub fn with_shader(self, shader_type: GLenum, glsl: &str) -> Self {
     let shader = load_shader(shader_type, glsl);
     unsafe { gl::AttachShader(self.handle, shader); }
     self
