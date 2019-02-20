@@ -4,11 +4,46 @@ use std::collections::HashMap;
 use gl::types::*;
 use cgmath::{ Matrix, Matrix4 };
 use std::ptr;
+use std::collections::HashSet;
+use std::cmp::Eq;
+
+// todo: cleanup shaders
+
+// Helper structs & enums
+
+/*
+#[derive(PartialEq)]
+enum Shader {
+  Vertex,
+  Fragment,
+  Geometry
+}
+
+struct ShaderHandle {
+  shader_type: Shader,
+  handle: GLuint
+}
+
+impl PartialEq for ShaderHandle {
+  fn eq(&self, other: &ShaderHandle) -> bool {
+   return self.shader_type == other.shader_type && self.handle == other.handle
+  }
+}
+
+impl Eq for ShaderHandle {}
+*/
+
+pub struct Uniform {
+  location: GLint,
+  gl_type: GLenum
+}
+
+// ShaderProgram
 
 #[derive(Default)]
 pub struct ShaderProgram {
   pub handle: GLuint,
-  pub uniform_location_map: RefCell<HashMap<String, GLint>>
+  pub uniform_location_map: RefCell<HashMap<String, Uniform>>
 }
 
 macro_rules! gl_stringify {
@@ -18,34 +53,47 @@ macro_rules! gl_stringify {
 impl ShaderProgram {
   pub unsafe fn get_uniform_location(&self, name: &str) -> GLint {
     let mut mut_map = self.uniform_location_map.borrow_mut();
-    let uniform_location_option = mut_map.get(name);
+    let uniform_option = mut_map.get(name);
     let uniform_location: GLint;
-    if let Some(location) = uniform_location_option {
-      uniform_location = *location;
+    if let Some(uniform) = uniform_option {
+      uniform_location = uniform.location;
     } else {
       uniform_location = gl::GetUniformLocation(self.handle, gl_stringify!(name));
-      mut_map.insert(String::from(name), uniform_location);
+      if uniform_location < 0 { panic!("uniform {} does not exist", name); }
+      let mut length: GLsizei = 0;  // howmany characters are written by OpenGL
+      let mut size: GLint = 0;      // size of uniform variable
+      let mut gl_type: GLenum = 0;  // type of the uniform variable
+      let mut gl_char: GLchar = 0;  // buffer to write the name of the uniform variable to
+      gl::GetActiveUniform(self.handle, uniform_location as GLuint, 1, &mut length as _, &mut size as _, &mut gl_type as _, &mut gl_char as _);
+      mut_map.insert(String::from(name), Uniform { location: uniform_location, gl_type } );
     }
     uniform_location
   }
 
   pub unsafe fn set_uniform_matrix(&self, name: &str, matrix: Matrix4<GLfloat>) {
-    let uniform_location = self.get_uniform_location(name);
-    if uniform_location < 0 { panic!("uniform {} does not exist", name); }
-    else { gl::UniformMatrix4fv(uniform_location, 1, gl::FALSE, matrix.as_ptr()); }
+    let uniform_location: GLint = self.get_uniform_location(name);
+    gl::UniformMatrix4fv(uniform_location, 1, gl::FALSE, matrix.as_ptr());
+  }
+
+  pub unsafe fn create_uniform_setter(&self, name: &str) -> UniformSetter {
+    let location = self.get_uniform_location(name);
+    UniformSetter { location }
   }
 }
 
 // BUILDER
 
+#[derive(Default)]
 pub struct ShaderProgramBuilder {
-  handle: GLuint
+  handle: GLuint,
+  shader_handles: HashSet<GLuint>,
 }
 
 impl ShaderProgramBuilder {
   pub fn new() -> Self {
     ShaderProgramBuilder {
-      handle: unsafe { gl::CreateProgram() }
+      handle: unsafe { gl::CreateProgram() },
+      ..Default::default()
     }
   }
 
@@ -64,9 +112,10 @@ impl ShaderProgramBuilder {
     self.with_shader(gl::GEOMETRY_SHADER, glsl)
   }
 
-  pub fn with_shader(self, shader_type: GLenum, glsl: &str) -> Self {
-    let shader = load_shader(shader_type, glsl);
-    unsafe { gl::AttachShader(self.handle, shader); }
+  pub fn with_shader(mut self, shader_type: GLenum, glsl: &str) -> Self {
+    let shader_handle = load_shader(shader_type, glsl);
+    unsafe { gl::AttachShader(self.handle, shader_handle); }
+    self.shader_handles.insert(shader_handle);
     self
   }
 
@@ -123,7 +172,7 @@ unsafe fn check_gl_status(handle: GLuint, status: GLenum){
   }
   let mut success: GLint = 1;
   get_paramater(handle, status, &mut success);
-  if success == 0 { 
+  if success == 0 {
     let mut len: GLint = 0;
     get_paramater(handle, gl::INFO_LOG_LENGTH, &mut len);
     let error = create_whitespace_cstring_with_len(len as usize);
@@ -134,5 +183,21 @@ unsafe fn check_gl_status(handle: GLuint, status: GLenum){
       error.as_ptr() as *mut GLchar
     );
     println!("Error: {}", error.to_string_lossy().into_owned())
+  }
+}
+
+// UniformSetter
+
+pub struct UniformSetter {
+  location: GLint
+}
+
+impl UniformSetter {
+  pub fn new(location: GLint) -> Self {
+    UniformSetter { location }
+  }
+
+  pub unsafe fn set(&self, value: Matrix4<GLfloat>) {
+    gl::UniformMatrix4fv(self.location, 1, gl::FALSE, value.as_ptr());
   }
 }
