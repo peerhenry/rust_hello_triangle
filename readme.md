@@ -8,11 +8,15 @@ Run the program with `cargo run`
 
 ## Update
 
-This project has been refactored to provide scalability.
-Features:
-- added an update method that rotates the triangle
-- segregated responsibilities in modules
-- triangle is an entity of components
-- builder pattern for generation of VAO
-- builder pattern for generation of Camera
-- game state is a struct of arrays - instead of containing an array of structs - in prospect of an ECS inspired by the [RustConf keynote](https://www.youtube.com/watch?v=aKLntZcp27M) by Catherine West.)
+This project features:
+- An update method that rotates the triangle
+- Segregated responsibilities in modules
+- Builder pattern for VAO, Camera and ShaderProgram and GameState
+- Reusable game logic in a separate library crate (under `lib/engine`)
+- A basic ECS - inspired by the [RustConf keynote by Catherine West](https://www.youtube.com/watch?v=aKLntZcp27M).)
+
+## Todo
+
+- FPS counter
+- Entity allocator
+- Make draw behavior a component in `GameState`
