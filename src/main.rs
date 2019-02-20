@@ -2,12 +2,9 @@
 // use gl::types::*;
 use glutin::{GlContext, GlWindow, EventsLoop};
 use cgmath::{ Rad, Deg, Matrix4, Point3, Vector3 };
-// use engine::vao_builder;
 use engine::camera;
 use engine::shader_program;
-use engine::game_state;
 use shader_program::{ ShaderProgram, ShaderProgramBuilder };
-use game_state::{ GameStateBuilder, GameState };
 use camera::{CameraBuilder, Camera};
 // modules
 mod context;
@@ -15,6 +12,8 @@ use crate::context::setup_context;
 mod triangle_creator;
 use crate::triangle_creator::add_triangle;
 mod event_handler;
+mod game_state;
+use crate::game_state::{ GameStateBuilder, GameState };
 
 fn main() -> Result<(), String> {
   start_game()

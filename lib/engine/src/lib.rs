@@ -1,6 +1,5 @@
 pub mod vao_builder;
 pub mod camera;
-pub mod game_state;
 pub mod shader_program;
 
 #[cfg(test)]
