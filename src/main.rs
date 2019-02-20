@@ -1,21 +1,19 @@
 // external crates
-use gl::types::*;
+// use gl::types::*;
 use glutin::{GlContext, GlWindow, EventsLoop};
 use cgmath::{ Rad, Deg, Matrix4, Point3, Vector3 };
+// use engine::vao_builder;
+use engine::camera;
+use engine::shader_program;
+use engine::game_state;
+use shader_program::{ ShaderProgram, ShaderProgramBuilder };
+use game_state::{ GameStateBuilder, GameState };
+use camera::{CameraBuilder, Camera};
 // modules
 mod context;
 use crate::context::setup_context;
-mod shader_program;
-use shader_program::ShaderProgram;
-mod shader_program_builder;
-use shader_program_builder::ShaderProgramBuilder;
-mod game_state;
-use crate::game_state::{GameStateBuilder, GameState};
-mod camera;
-use crate::camera::{CameraBuilder, Camera};
 mod triangle_creator;
 use crate::triangle_creator::add_triangle;
-mod vao_builder;
 mod event_handler;
 
 fn main() -> Result<(), String> {

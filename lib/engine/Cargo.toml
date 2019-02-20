@@ -1,13 +1,9 @@
 [package]
-name = "rust_hello_triangle"
+name = "engine"
 version = "0.1.0"
 authors = ["PeerHenry <peerhenry@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-libc = "*"
 cgmath = "0.15.0"
 gl = "*"
-glutin = "0.9.2"
-image = "*"
-engine = { path = "lib/engine" }

@@ -38,10 +38,7 @@ fn handle_key_input(input: glutin::KeyboardInput, game: &mut GameState) {
   }
 }
 
-fn handle_mouse_input(state: glutin::ElementState, button: glutin::MouseButton, game: &mut GameState) {
 
-}
+fn handle_mouse_input(_state: glutin::ElementState, _button: glutin::MouseButton, _game: &mut GameState) { }
 
-fn handle_mouse_wheel(delta: glutin::MouseScrollDelta, game: &mut GameState) {
-
-}
+fn handle_mouse_wheel(_delta: glutin::MouseScrollDelta, _game: &mut GameState) { }
