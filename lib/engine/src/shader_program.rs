@@ -234,11 +234,3 @@ impl SetUniform<GLfloat> for UniformSetter {
     gl::Uniform1f(self.location, value)
   }
 }
-
-/*
-impl UniformSetter<GLfloat> {
-  pub unsafe fn set(&self, value: GLfloat) {
-    gl::Uniform1f(self.location, value)
-  }
-}
-*/

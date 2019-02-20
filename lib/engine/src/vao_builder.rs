@@ -7,8 +7,6 @@ use self::attrib_parameters::AttribParameters;
 pub mod buffer_component;
 use self::buffer_component::BufferComponent;
 
-// builder pattern; VaoBuilder returns BufferComponent
-
 pub struct VaoBuilder {
   use_indices: bool,
   attribs: Vec<AttribData>,

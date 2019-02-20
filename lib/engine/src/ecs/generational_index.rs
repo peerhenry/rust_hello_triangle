@@ -31,6 +31,7 @@ impl GenerationalIndexAllocator {
       if let Some(free_index) = self.free.pop() {
         let index = free_index;
         let generation = self.entries[free_index].generation + 1;
+        self.entries[free_index].is_live = true;
         (index, generation)
       } else {
         let index = self.entries.len();
@@ -66,5 +67,66 @@ impl GenerationalIndexAllocator {
   #[allow(dead_code)]
   pub fn is_live(&self, generational_index: GenerationalIndex) -> bool {
     return self.entries[generational_index.index].is_live;
+  }
+}
+
+// UNIT TESTS
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn first_allocated_index() {
+    // arrange
+    let mut allocator = GenerationalIndexAllocator::default();
+    // act
+    let generational_index: GenerationalIndex = allocator.allocate();
+    // assert
+    assert!(allocator.is_live(generational_index));
+    assert_eq!(generational_index.index(), 0);
+    assert_eq!(generational_index.generation(), 0);
+  }
+
+  #[test]
+  fn second_allocated_index() {
+    // arrange
+    let mut allocator = GenerationalIndexAllocator::default();
+    // act
+    let generational_index = allocator.allocate();
+    let generational_index_b = allocator.allocate();
+    // assert
+    assert!(allocator.is_live(generational_index));
+    assert_eq!(generational_index.index(), 0);
+    assert_eq!(generational_index.generation(), 0);
+    assert!(allocator.is_live(generational_index_b));
+    assert_eq!(generational_index_b.index(), 1);
+    assert_eq!(generational_index_b.generation(), 0);
+  }
+
+  #[test]
+  fn second_allocated_deallocate() {
+    // arrange
+    let mut allocator = GenerationalIndexAllocator::default();
+    // act
+    let generational_index = allocator.allocate();
+    let result = allocator.deallocate(generational_index);
+    // assert
+    assert!(!allocator.is_live(generational_index));
+    assert_eq!(result, true);
+  }
+
+  #[test]
+  fn second_allocated_deallocate_allocate() {
+    // arrange
+    let mut allocator = GenerationalIndexAllocator::default();
+    // act
+    let generational_index = allocator.allocate();
+    let result = allocator.deallocate(generational_index);
+    let generational_index = allocator.allocate();
+    // assert
+    assert!(allocator.is_live(generational_index));
+    assert_eq!(generational_index.index(), 0);
+    assert_eq!(generational_index.generation(), 1);
   }
 }
