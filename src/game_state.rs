@@ -9,16 +9,14 @@ use engine::ecs::generational_entries::*;
 
 #[derive(Default)]
 pub struct GameState {
-  pub entity_allocator: GenerationalIndexAllocator,
-  // assets
   pub running: bool,
   pub shader_program: Option<ShaderProgram>,
   pub camera: Option<Camera>,
-  // components
+  // ECS
+  pub entity_allocator: GenerationalIndexAllocator,
   pub vaos: GenerationalEntries<GLuint>,
   pub model_matrices: GenerationalEntries<Matrix4<GLfloat>>,
   pub vertex_counts: GenerationalEntries<GLsizei>,
-  // entity indices
   pub entities: Vec<GenerationalIndex>
 }
 

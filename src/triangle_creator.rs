@@ -5,7 +5,9 @@ use crate::game_state::GameState;
 use engine::vao_builder::VaoBuilder;
 use engine::vao_builder::attrib_parameters::AttribParameters;
 
-pub fn add_triangle(game_state: &mut GameState) {
+pub fn add_triangle(game_state: &mut GameState)-> Option<()> {
+  // todo: get attributes from program (floats per attribute, floats per vertex)
+  // game_state.program?.get_active_attributes();
   let floats_per_vertex: usize = 7;
   // buffers
   let buffers = VaoBuilder::new()
@@ -29,6 +31,7 @@ pub fn add_triangle(game_state: &mut GameState) {
   game_state.model_matrices.set(generational_index, model_matrix);
   game_state.vertex_counts.set(generational_index, vertex_count);
   game_state.entities.push(generational_index);
+  Some(())
 }
 
 unsafe fn populate_vbo(vbo: GLuint, floats_per_vertex: usize) -> GLsizei {

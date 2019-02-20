@@ -88,6 +88,49 @@ impl ShaderProgram {
     let uniform = self.get_uniform(name);
     UniformSetter::new(uniform.location)
   }
+
+  #[allow(dead_code)]
+  pub unsafe fn get_active_attributes(&self) -> Vec<u8> {
+    let mut count: GLint = 0;
+    gl::GetProgramiv(self.handle, gl::ACTIVE_ATTRIBUTES, &mut count);
+    let mut bufSize = 1;
+    let mut length = 0;
+    let mut size = 0;
+    let mut gl_type: GLenum = 0;
+    let mut name: GLchar = 0;
+    let mut attrib_types = Vec::new();
+    for i in 0..count {
+      gl::GetActiveAttrib(self.handle, i as GLuint, bufSize, &mut length, &mut size, &mut gl_type, &mut name);
+      let float_count = gl_type_to_float_count(gl_type);
+      println!("Attribute of type {} and float count {}", gl_enum_to_string(gl_type), float_count);
+      attrib_types.push(float_count)
+    }
+    attrib_types
+  }
+}
+
+fn gl_enum_to_string(gl_type: GLenum) -> String {
+  let thing: &str = match gl_type {
+    gl::FLOAT => "GL_FLOAT",
+    gl::FLOAT_MAT4 => "GL_FLOAT_MAT4",
+    gl::FLOAT_VEC2 => "GL_FLOAT_VEC2",
+    gl::FLOAT_VEC3 => "GL_FLOAT_VEC3",
+    gl::FLOAT_VEC4 => "GL_FLOAT_VEC4",
+    _ => "unknown"
+  };
+  String::from(thing)
+}
+
+fn gl_type_to_float_count(gl_type: GLenum) -> u8 {
+  let thing = match gl_type {
+    gl::FLOAT => 1,
+    gl::FLOAT_MAT4 => 16,
+    gl::FLOAT_VEC2 => 2,
+    gl::FLOAT_VEC3 => 3,
+    gl::FLOAT_VEC4 => 4,
+    _ => 0
+  };
+  thing
 }
 
 // checkout a complete list of gl types here: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetActiveUniform.xhtml

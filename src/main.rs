@@ -34,6 +34,7 @@ fn build_game_state() -> GameState {
   let vertex_glsl: &str = include_str!("glsl/vertex.glsl");
   let fragment_glsl: &str = include_str!("glsl/fragment.glsl");
   let some_program = Some(build_shader_program(vertex_glsl, fragment_glsl));
+  if let Some(program) = &some_program { unsafe{ program.get_active_attributes(); } }
   let some_cam = Some(build_camera());
   GameStateBuilder::new()
     .with_shader_program(some_program)
