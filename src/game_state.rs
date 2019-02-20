@@ -12,6 +12,7 @@ pub struct GameState {
   // components
   pub vaos: Vec<GLuint>,
   pub model_matrices: Vec<Matrix4<GLfloat>>,
+  pub vertex_counts: Vec<GLsizei>,
   // entity indices
   pub entities: Vec<usize>
 }
@@ -42,10 +43,11 @@ impl GameState {
   fn draw_entity(&self, program: &ShaderProgram, entity_index: usize) {
     let vao = self.vaos[entity_index];
     let model_matrix = self.model_matrices[entity_index];
+    let vertex_count = self.vertex_counts[entity_index];
     unsafe {
       program.set_uniform_matrix("Model", model_matrix);
       gl::BindVertexArray(vao);
-      gl::DrawArrays(gl::TRIANGLES, 0, 3);
+      gl::DrawArrays(gl::TRIANGLES, 0, vertex_count);
     }
   }
 }
