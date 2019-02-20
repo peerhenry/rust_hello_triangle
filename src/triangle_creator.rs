@@ -5,7 +5,7 @@ use crate::game_state::GameState;
 use engine::vao_builder::VaoBuilder;
 use engine::vao_builder::attrib_parameters::AttribParameters;
 
-pub fn add_triangle(game: &mut GameState) {
+pub fn add_triangle(game_state: &mut GameState) {
   let floats_per_vertex: usize = 7;
   // buffers
   let buffers = VaoBuilder::new()
@@ -24,10 +24,11 @@ pub fn add_triangle(game: &mut GameState) {
   let vao = buffers.vao;
   let model_matrix: Matrix4<GLfloat> = Matrix4::from_value(1.0);
   // add entity to game; todo: use allocator
-  game.vaos.push(vao);
-  game.model_matrices.push(model_matrix);
-  game.vertex_counts.push(vertex_count);
-  game.entities.push(0);
+  let generational_index = game_state.entity_allocator.allocate();
+  game_state.vaos.set(generational_index, vao);
+  game_state.model_matrices.set(generational_index, model_matrix);
+  game_state.vertex_counts.set(generational_index, vertex_count);
+  game_state.entities.push(generational_index);
 }
 
 unsafe fn populate_vbo(vbo: GLuint, floats_per_vertex: usize) -> GLsizei {

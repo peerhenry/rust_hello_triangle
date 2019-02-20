@@ -77,10 +77,11 @@ fn run_game(window: GlWindow, events_loop: EventsLoop, mut game_state: GameState
   Ok(())
 }
 
-fn update(game: &mut GameState) {
+fn update(game: &mut GameState) -> Option<()> {
   for entity_index in &game.entities {
-    let model_matrix = game.model_matrices[*entity_index];
+    let model_matrix = game.model_matrices.get(*entity_index)?;
     let rot = Matrix4::from_angle_y(Rad(0.1));
-    game.model_matrices[*entity_index] = rot * model_matrix;
+    game.model_matrices.set(*entity_index, rot*model_matrix);
   }
+  Some(())
 }
