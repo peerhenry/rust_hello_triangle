@@ -3,7 +3,7 @@ use gl::types::*;
 use cgmath::{ Matrix4 };
 use crate::camera::Camera;
 use engine::ecs::generational_index::*;
-use engine::ecs::generational_entry::*;
+use engine::ecs::generational_entries::*;
 
 // GameState
 
@@ -60,8 +60,7 @@ impl GameState {
 
 // builder
 #[derive(Default)]
-pub struct GameStateBuilder
-{
+pub struct GameStateBuilder {
   pub shader_program: Option<ShaderProgram>,
   pub camera: Option<Camera>,
 }

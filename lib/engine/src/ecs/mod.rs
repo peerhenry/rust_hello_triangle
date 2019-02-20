@@ -1,10 +1,10 @@
-pub mod generational_entry;
+pub mod generational_entries;
 pub mod generational_index;
 
 #[cfg(test)]
 mod tests {
   use super::generational_index::*;
-  use super::generational_entry::*;
+  use super::generational_entries::*;
 
   #[test]
   fn first_allocated_index() {
@@ -42,7 +42,7 @@ mod tests {
     assert_eq!(result, true);
   }
 
-    #[test]
+  #[test]
   fn second_allocated_deallocate_allocate() {
     // arrange
     let mut allocator = GenerationalIndexAllocator::default();

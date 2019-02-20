@@ -40,3 +40,26 @@ impl<T> Default for GenerationalEntries<T> {
     GenerationalEntries(Vec::new())
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn first_allocated_index() {
+    // arrange
+    let mut allocator = GenerationalIndexAllocator::default();
+    let generational_index = allocator.allocate();
+    let mut entries = GenerationalEntries::<u32>::default();
+    let expect = 42;
+    entries.set(generational_index, expect);
+    // act
+    let result_opt = entries.get(generational_index);
+    // assert
+    if let Some(result) = result_opt {
+      assert_eq!(expect, *result);
+    } else {
+      assert!(false);
+    }
+  }
+}
