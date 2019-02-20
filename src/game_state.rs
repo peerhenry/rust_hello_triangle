@@ -1,4 +1,4 @@
-use crate::shader_program::ShaderProgram;
+use crate::shader_program::{ ShaderProgram, SetUniform };
 use gl::types::*;
 use cgmath::{ Matrix4 };
 use crate::camera::Camera;

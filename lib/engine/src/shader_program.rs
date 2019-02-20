@@ -5,13 +5,16 @@ use gl::types::*;
 use cgmath::{ Matrix, Matrix4 };
 use std::ptr;
 use std::collections::HashSet;
-use std::cmp::Eq;
+use std::any::TypeId;
+use std::marker::PhantomData;
 
 // todo: cleanup shaders
 
 // Helper structs & enums
 
 /*
+use std::cmp::Eq;
+
 #[derive(PartialEq)]
 enum Shader {
   Vertex,
@@ -33,6 +36,7 @@ impl PartialEq for ShaderHandle {
 impl Eq for ShaderHandle {}
 */
 
+#[derive(Clone, Copy)]
 pub struct Uniform {
   location: GLint,
   gl_type: GLenum
@@ -51,23 +55,28 @@ macro_rules! gl_stringify {
 }
 
 impl ShaderProgram {
-  pub unsafe fn get_uniform_location(&self, name: &str) -> GLint {
+  pub unsafe fn get_uniform(&self, name: &str) -> Uniform {
     let mut mut_map = self.uniform_location_map.borrow_mut();
     let uniform_option = mut_map.get(name);
-    let uniform_location: GLint;
-    if let Some(uniform) = uniform_option {
-      uniform_location = uniform.location;
+    let uniform: Uniform;
+    if let Some(wrapped_uniform) = uniform_option {
+      uniform = *wrapped_uniform;
     } else {
-      uniform_location = gl::GetUniformLocation(self.handle, gl_stringify!(name));
+      let uniform_location = gl::GetUniformLocation(self.handle, gl_stringify!(name));
       if uniform_location < 0 { panic!("uniform {} does not exist", name); }
       let mut length: GLsizei = 0;  // howmany characters are written by OpenGL
       let mut size: GLint = 0;      // size of uniform variable
       let mut gl_type: GLenum = 0;  // type of the uniform variable
       let mut gl_char: GLchar = 0;  // buffer to write the name of the uniform variable to
       gl::GetActiveUniform(self.handle, uniform_location as GLuint, 1, &mut length as _, &mut size as _, &mut gl_type as _, &mut gl_char as _);
-      mut_map.insert(String::from(name), Uniform { location: uniform_location, gl_type } );
+      uniform = Uniform { location: uniform_location, gl_type };
+      mut_map.insert(String::from(name), uniform);
     }
-    uniform_location
+    uniform
+  }
+
+  pub unsafe fn get_uniform_location(&self, name: &str) -> GLint {
+    self.get_uniform(name).location
   }
 
   pub unsafe fn set_uniform_matrix(&self, name: &str, matrix: Matrix4<GLfloat>) {
@@ -76,8 +85,17 @@ impl ShaderProgram {
   }
 
   pub unsafe fn create_uniform_setter(&self, name: &str) -> UniformSetter {
-    let location = self.get_uniform_location(name);
-    UniformSetter { location }
+    let uniform = self.get_uniform(name);
+    UniformSetter::new(uniform.location)
+  }
+}
+
+// checkout a complete list of gl types here: https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glGetActiveUniform.xhtml
+fn get_required_type_id(gl_type: GLenum) -> TypeId {
+  match gl_type {
+    GL_FLOAT => return TypeId::of::<GLfloat>(),
+    GL_FLOAT_MAT4 => return TypeId::of::<Matrix4<GLfloat>>(),
+    _ => panic!("gl type not recognized: {}", gl_type)
   }
 }
 
@@ -188,16 +206,39 @@ unsafe fn check_gl_status(handle: GLuint, status: GLenum){
 
 // UniformSetter
 
+pub trait SetUniform<T> {
+  unsafe fn set(&self, value: T) {
+    panic!("cannot handle type for OpenGL");
+  }
+}
+
 pub struct UniformSetter {
-  location: GLint
+  location: GLint,
+  // phantom: PhantomData<&'a T>
 }
 
 impl UniformSetter {
   pub fn new(location: GLint) -> Self {
-    UniformSetter { location }
-  }
-
-  pub unsafe fn set(&self, value: Matrix4<GLfloat>) {
-    gl::UniformMatrix4fv(self.location, 1, gl::FALSE, value.as_ptr());
+    return UniformSetter { location };
   }
 }
+
+impl SetUniform<Matrix4<GLfloat>> for UniformSetter {
+  unsafe fn set(&self, value: Matrix4<GLfloat>) {
+    gl::UniformMatrix4fv(self.location, 1, gl::FALSE, value.as_ptr())
+  }
+}
+
+impl SetUniform<GLfloat> for UniformSetter {
+  unsafe fn set(&self, value: GLfloat) {
+    gl::Uniform1f(self.location, value)
+  }
+}
+
+/*
+impl UniformSetter<GLfloat> {
+  pub unsafe fn set(&self, value: GLfloat) {
+    gl::Uniform1f(self.location, value)
+  }
+}
+*/
