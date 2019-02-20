@@ -34,15 +34,19 @@ impl GameState {
       program.set_uniform_matrix("Projection", cam.projection_matrix);
     }
     for entity_index in &self.entities {
-      let vao = self.vaos[*entity_index];
-      let model_matrix = self.model_matrices[*entity_index];
-      unsafe {
-        program.set_uniform_matrix("Model", model_matrix);
-        gl::BindVertexArray(vao);
-        gl::DrawArrays(gl::TRIANGLES, 0, 3);
-      }
+      self.draw_entity(program, *entity_index);
     }
     Ok(())
+  }
+
+  fn draw_entity(&self, program: &ShaderProgram, entity_index: usize) {
+    let vao = self.vaos[entity_index];
+    let model_matrix = self.model_matrices[entity_index];
+    unsafe {
+      program.set_uniform_matrix("Model", model_matrix);
+      gl::BindVertexArray(vao);
+      gl::DrawArrays(gl::TRIANGLES, 0, 3);
+    }
   }
 }
 
