@@ -14,13 +14,12 @@ mod triangle_creator;
 use triangle_creator::*;
 
 fn main() -> Result<(), String> {
-  start_game();
-  Ok(())
+  start_game()
 }
 
-fn start_game() {
+fn start_game() -> Result<(), String> {
   let game_builder = GameBuilder::new();
   let mut game = game_builder.build();
   add_triangle(&mut game.game_state);
-  game.run();
+  game.run()
 }

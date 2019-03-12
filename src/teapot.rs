@@ -16,7 +16,7 @@ fn main() -> Result<(), String> {
 }
 
 fn start_game() -> Result<(), String> {
-  let game_builder = GameBuilder::new().with_name("Hello Dummy");
+  let game_builder = GameBuilder::new().with_name("Hello Teapot");
   let mut game = game_builder.build();
   let vertices: Vec<GLfloat> = vec![
     // X    Y   Z       R     G     B   A

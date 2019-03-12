@@ -25,19 +25,21 @@ impl GameBuilder {
     }
   }
 
-  pub fn with_name(&mut self, name: String) {
-    self.name = name;
+  pub fn with_name(mut self, name: &str) -> Self {
+    self.name = name.to_string();
+    self
   }
 
-  pub fn with_resolution(&mut self, width: u32, height: u32) {
+  pub fn with_resolution(mut self, width: u32, height: u32) -> Self {
     self.width = width;
     self.height = height;
+    self
   }
 
   // todo: pub with_clear_color() and other gl settings
 
   pub fn build(&self) -> Game {
-    let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
+    let (window, events_loop) = setup_context(&self.name, 1600, 900);
     unsafe {
       gl::ClearColor(0.0, 154.0/255.0, 206.0/255.0, 235.0/255.0);
       gl::Enable(gl::DEPTH_TEST);
@@ -62,8 +64,8 @@ impl Game {
     add_model(&mut self.game_state, vertices);
   }
 
-  pub fn run(self) {
-    run_game(self.window, self.events_loop, self.game_state);
+  pub fn run(self) -> Result<(), String> {
+    run_game(self.window, self.events_loop, self.game_state)
   }
 }
 
