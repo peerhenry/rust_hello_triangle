@@ -1,5 +1,6 @@
 // external crates
 // use gl::types::*;
+use gl::types::GLfloat;
 use glutin::{GlContext, GlWindow, EventsLoop};
 use cgmath::{ Rad, Deg, Matrix4, Point3, Vector3 };
 use engine::camera;
@@ -9,12 +10,11 @@ use camera::{CameraBuilder, Camera};
 // modules
 mod context;
 use crate::context::setup_context;
-mod triangle_creator;
-use crate::triangle_creator::add_triangle;
+mod model_creator;
+use crate::model_creator::add_model;
 mod event_handler;
 mod game_state;
 use crate::game_state::{ GameStateBuilder, GameState };
-mod model_creator;
 
 fn main() -> Result<(), String> {
   start_game()
@@ -24,6 +24,7 @@ fn start_game() -> Result<(), String> {
   let (window, events_loop) = setup_context("Hello, Triangle", 1600, 900);
   unsafe {
     gl::ClearColor(0.0, 154.0/255.0, 206.0/255.0, 235.0/255.0);
+    gl::Enable(gl::DEPTH_TEST);
   }
   let mut game_state = build_game_state();
   init_game(&mut game_state);
@@ -31,8 +32,8 @@ fn start_game() -> Result<(), String> {
 }
 
 fn build_game_state() -> GameState {
-  let vertex_glsl: &str = include_str!("glsl/vertex.glsl");
-  let fragment_glsl: &str = include_str!("glsl/fragment.glsl");
+  let vertex_glsl: &str = include_str!("../src/glsl/vertex.glsl");
+  let fragment_glsl: &str = include_str!("../src/glsl/fragment.glsl");
   let some_program = Some(build_shader_program(vertex_glsl, fragment_glsl));
   if let Some(program) = &some_program { unsafe{ program.get_active_attributes(); } }
   let some_cam = Some(build_camera());
@@ -43,7 +44,16 @@ fn build_game_state() -> GameState {
 }
 
 fn init_game(game_state: &mut GameState) {
-  add_triangle(game_state);
+  let vertices: Vec<GLfloat> = vec![
+    // X    Y   Z       R     G     B   A
+     0.0,  0.5, 0.0,    1.0, 0.0, 0.0, 1.0,
+    -0.5, -0.5, 0.0,    0.0, 1.0, 0.0, 1.0,
+     0.5, -0.5, 0.0,    0.0, 0.0, 1.0, 1.0,
+     0.0,  0.1, 0.1,    1.0, 0.0, 0.0, 1.0, // a smaller triangle in front of the first
+    -0.1, -0.1, 0.1,    0.0, 1.0, 0.0, 1.0,
+     0.1, -0.1, 0.1,    0.0, 0.0, 1.0, 1.0
+  ];
+  add_model(game_state, vertices);
 }
 
 fn build_shader_program(vertex_glsl: &str, fragment_glsl: &str) -> ShaderProgram {

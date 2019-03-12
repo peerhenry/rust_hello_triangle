@@ -11,3 +11,11 @@ gl = "*"
 glutin = "0.9.2"
 image = "*"
 engine = { path = "lib/engine" }
+
+[[bin]]
+name = "triangle"
+path = "src/main.rs"
+
+[[bin]]
+name = "dummy"
+path = "./src/dummy.rs"

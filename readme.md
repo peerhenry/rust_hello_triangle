@@ -4,7 +4,7 @@ This is a simple program in [Rust](https://www.rust-lang.org/en-US/) that compil
 
 ![Render output](https://github.com/peerhenry/rust_hello_triangle/blob/master/Capture.PNG)
 
-Run the program with `cargo run`
+Run the program with `cargo run --bin triangle`
 
 ## Update
 
