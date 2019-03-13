@@ -1,4 +1,6 @@
 // external crates
+#[macro_use]
+extern crate if_chain;
 // use gl::types::*;
 use gl::types::GLfloat;
 use engine::camera;
@@ -10,13 +12,18 @@ mod event_handler;
 mod game_state;
 mod game_builder;
 use game_builder::*;
+mod game_state_renderer;
 
 fn main() -> Result<(), String> {
   start_game()
 }
 
 fn start_game() -> Result<(), String> {
-  let game_builder = GameBuilder::new().with_name("Hello Dummy");
+  let vertex_glsl: &str = include_str!("../src/glsl/vertex.glsl");
+  let fragment_glsl: &str = include_str!("../src/glsl/fragment.glsl");
+  let game_builder = GameBuilder::new()
+    .with_shaders(vertex_glsl, fragment_glsl)
+    .with_name("Hello Dummy");
   let mut game = game_builder.build();
   let vertices: Vec<GLfloat> = vec![
     // X    Y   Z       R     G     B   A

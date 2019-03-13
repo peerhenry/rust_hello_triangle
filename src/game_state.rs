@@ -28,32 +28,6 @@ impl GameState {
       ..Default::default()
     }
   }
-
-  pub fn draw(&self) -> Result<(),&str> {
-    unsafe { gl::Clear(gl::DEPTH_BUFFER_BIT | gl::COLOR_BUFFER_BIT); }
-    let program = self.shader_program.as_ref().map_or(Err("Trying to draw but no shader program in GameState"), |p| Ok(p))?;
-    let cam = self.camera.as_ref().map_or(Err("Trying to draw but no camera in GameState"), |c| Ok(c))?;
-    unsafe {
-      program.set_uniform_matrix("View", cam.view_matrix);
-      program.set_uniform_matrix("Projection", cam.projection_matrix);
-    }
-    for entity_index in &self.entities {
-      self.draw_entity(program, *entity_index);
-    }
-    Ok(())
-  }
-
-  fn draw_entity(&self, program: &ShaderProgram, entity_index: GenerationalIndex) -> Option<()> {
-    let vao = *self.vaos.get(entity_index)?;
-    let model_matrix = *self.model_matrices.get(entity_index)?;
-    let vertex_count = *self.vertex_counts.get(entity_index)?;
-    unsafe {
-      program.set_uniform_matrix("Model", model_matrix);
-      gl::BindVertexArray(vao);
-      gl::DrawArrays(gl::TRIANGLES, 0, vertex_count);
-    }
-    Some(())
-  }
 }
 
 // builder

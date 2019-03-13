@@ -21,11 +21,15 @@ fn main() -> Result<(), String> {
 }
 
 fn start_game() -> Result<(), String> {
-  let vertex_glsl: &str = include_str!("../src/glsl/vertex.glsl");
-  let fragment_glsl: &str = include_str!("../src/glsl/fragment.glsl");
+  let vertex_glsl: &str = include_str!("../src/glsl/point_render/vertex.glsl");
+  let fragment_glsl: &str = include_str!("../src/glsl/point_render/fragment.glsl");
+  let geometry_glsl: &str = include_str!("../src/glsl/point_render/geometry.glsl");
   let game_builder = GameBuilder::new()
+    .with_geometry_shader(geometry_glsl)
+    .with_mode(gl::POINTS)
     .with_shaders(vertex_glsl, fragment_glsl);
   let mut game = game_builder.build();
+  unsafe { gl::PointSize(20.0); }
   add_triangle(&mut game.game_state);
   game.run()
 }

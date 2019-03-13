@@ -1,4 +1,4 @@
-#version 450 core
+#version 450
 
 in vec4 Color;
 out vec4 FragmentColor;

@@ -6,6 +6,10 @@ This is a simple program in [Rust](https://www.rust-lang.org/en-US/) that compil
 
 Run the program with `cargo run --bin triangle`
 
+Alternatively you can run some other scenes
+- `cargo run --bin dummy`
+- `cargo run --bin point`
+
 ## Update
 
 This project features:
